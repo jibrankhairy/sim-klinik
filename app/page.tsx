@@ -1,103 +1,232 @@
+"use client";
+
 import Image from "next/image";
+import React, { useState } from "react";
 
-export default function Home() {
+const EyeIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const EyeOffIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+    <line x1="2" x2="22" y1="2" y2="22" />
+  </svg>
+);
+
+export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="bg-white font-sans text-gray-900">
+      <div className="flex min-h-screen">
+        <div className="flex flex-1 flex-col justify-between items-center p-6 lg:p-10">
+          <div className="w-full text-left">
+            <img
+              src="/images/logo-klinik.png"
+              alt="Logo Klinik"
+              className="h-12 w-auto cursor-pointer"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+
+          <div className="w-full max-w-sm">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold tracking-tight">Welcome</h2>
+              <p className="text-gray-500 mt-2 whitespace-nowrap">
+                Enter your email and password to access your account.
+              </p>
+            </div>
+
+            <form className="space-y-6">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="Input your email"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-[#01449D] focus:outline-none focus:ring-1 focus:ring-[#01449D] sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Password
+                </label>
+                <div className="mt-1 relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    placeholder="Input your password"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-[#01449D] focus:outline-none focus:ring-1 focus:ring-[#01449D] sm:text-sm"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <EyeIcon className="text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 focus:ring-[#01449D] accent-[#01449D]"
+                  />
+                  <label
+                    htmlFor="remember-me"
+                    className="ml-2 block text-sm text-gray-900"
+                  >
+                    Remember Me
+                  </label>
+                </div>
+
+                <div className="text-sm">
+                  <a
+                    href="#"
+                    className="font-medium hover:underline"
+                    style={{ color: "#01449D" }}
+                  >
+                    Forgot Your Password?
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  className="flex w-full justify-center rounded-md border border-transparent py-3 px-4 text-sm font-medium text-white shadow-sm hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01449D]"
+                  style={{ backgroundColor: "#01449D" }}
+                >
+                  Log In
+                </button>
+              </div>
+            </form>
+            <p className="mt-8 text-center text-sm text-gray-500">
+              Don't Have An Account?{" "}
+              <a
+                href="#"
+                className="font-medium hover:underline"
+                style={{ color: "#01449D" }}
+              >
+                Register Now.
+              </a>
+            </p>
+          </div>
+
+          <div className="w-full text-center lg:text-left">
+            <p className="text-xs text-gray-400">
+              Copyright © 2025 Sim Klinik.
+              <a href="#" className="ml-4 hover:underline">
+                Privacy Policy
+              </a>
+            </p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <div
+          className="hidden lg:flex flex-1 items-center justify-center text-white p-10 relative overflow-hidden"
+          style={{ backgroundColor: "#01449D" }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <svg
+            className="absolute inset-0 h-full w-full"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <pattern
+                id="wavy"
+                patternUnits="userSpaceOnUse"
+                width="40"
+                height="80"
+                patternTransform="rotate(45)"
+              >
+                <path
+                  d="M 0 20 Q 10 10, 20 20 T 40 20"
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                  fill="none"
+                  strokeOpacity="0.1"
+                />
+                <path
+                  d="M 0 60 Q 10 50, 20 60 T 40 60"
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                  fill="none"
+                  strokeOpacity="0.1"
+                />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#wavy)" />
+          </svg>
+          <div className="relative z-10 flex flex-col items-center text-center max-w-lg">
+            <Image
+              src="/images/3d-doctor-klinik.png"
+              alt="3D Illustration of a doctor"
+              width="500"
+              height="500"
+              className="mb-8 object-contain"
+            />
+            <h2 className="text-4xl font-bold leading-tight">
+              Welcome to the new era of clinical management.
+            </h2>
+            <p className="mt-4" style={{ color: "rgba(255, 255, 255, 0.8)" }}>
+              Access your clinical information system for faster and modern
+              services.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
