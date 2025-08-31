@@ -1,11 +1,25 @@
 // app/dashboardAsset/page.tsx
 
 "use client";
+// --- TYPO DIPERBAIKI DI BAGIAN IMPORT ---
 import React, { useState, useEffect } from 'react';
-import type { Asset, User } from '@prisma/client';
+import type { Asset, User, Location } from '@prisma/client';
 
-type AssetWithCalculations = Asset & { pic: User | null; currentValue: number; accumulatedDepreciation: number; };
-type ApiResponse = { summary: { totalInitialValue: number; totalCurrentValue: number; totalDepreciation: number; }; assets: AssetWithCalculations[]; };
+// Tipe data disesuaikan, sekarang location adalah objek utuh
+type AssetWithDetails = Asset & { 
+  pic: User | null;
+  location: Location;
+  currentValue: number;
+  accumulatedDepreciation: number;
+};
+type ApiResponse = {
+    summary: {
+        totalInitialValue: number;
+        totalCurrentValue: number;
+        totalDepreciation: number;
+    };
+    assets: AssetWithDetails[];
+};
 
 const formatRupiah = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -45,17 +59,15 @@ const CalendarCard = () => (
     </div>
 );
 
-const JournalCard = ({ asset }: { asset?: AssetWithCalculations }) => (
+const JournalCard = ({ asset }: { asset?: AssetWithDetails }) => (
     <div className="bg-white p-6 rounded-lg shadow-md">
         <h3 className="text-lg font-bold text-gray-800 mb-4">Jurnal Terakhir</h3>
         {asset ? (
             <div className="space-y-2">
                 <p className="font-bold text-[#01449D]">{asset.productName.toUpperCase()}</p>
                 <p className="text-sm text-gray-500">Tanggal Beli: {new Date(asset.purchaseDate).toLocaleDateString('id-ID')}</p>
-                {/* --- PERBAIKAN DI SINI --- */}
-                {/* Ubah string ke angka dengan parseFloat sebelum diformat */}
                 <p className="text-sm text-gray-500">Harga: {formatRupiah(parseFloat(asset.price as any))}</p>
-                <p className="text-sm text-gray-500">Lokasi: {asset.location}</p>
+                <p className="text-sm text-gray-500">Lokasi: {asset.location.name}</p>
             </div>
         ) : <p className="text-sm text-gray-500">Tidak ada jurnal terbaru.</p>}
     </div>

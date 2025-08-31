@@ -61,7 +61,7 @@ export default function DashboardAssetLayout({ children }: { children: React.Rea
                 <NavItem icon={<HomeIcon />} href="/dashboardAsset">Dashboard</NavItem>
                 <NavItem icon={<AssetIcon />} href="/dashboardAsset/list">Asset List</NavItem>
                 <NavItem icon={<MaintenanceIcon />} href="#">Maintenance</NavItem>
-                <NavItem icon={<MasterDataIcon />} href="#">Master Data</NavItem>
+                <NavItem icon={<MasterDataIcon />} href="/dashboardAsset/master-data">Master Data</NavItem>
                 <NavItem icon={<UserManagementIcon />} href="#">User Management</NavItem>
                 <NavItem icon={<HomeIcon />} href="/dashboardMain">Back to Main</NavItem>
             </nav>
