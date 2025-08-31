@@ -12,12 +12,6 @@ async function main() {
     create: { name: "SUPER_ADMIN" },
   });
 
-  const adminAssetRole = await prisma.role.upsert({
-    where: { name: "ASSET" },
-    update: {},
-    create: { name: "ASSET" },
-  });
-
   const adminAccountingRole = await prisma.role.upsert({
     where: { name: "ACCOUNTING" },
     update: {},
@@ -46,19 +40,6 @@ async function main() {
     },
   });
   console.log("Super Admin user created/updated.");
-
-  const hashedPasswordAsset = await bcrypt.hash("assetsimklinik", 10);
-  await prisma.user.upsert({
-    where: { email: "adminasset@simklinik.com" },
-    update: {},
-    create: {
-      email: "adminasset@simklinik.com",
-      fullName: "Admin Asset Management",
-      password: hashedPasswordAsset,
-      roleId: adminAssetRole.id,
-    },
-  });
-  console.log("Admin Asset created.");
 
   const hashedPasswordAccounting = await bcrypt.hash("accountingsimklinik", 10);
   await prisma.user.upsert({

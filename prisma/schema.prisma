@@ -1,3 +1,5 @@
+// schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,12 +18,42 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  role      Role     @relation(fields: [roleId], references: [id])
-  roleId    Int
+  role   Role @relation(fields: [roleId], references: [id])
+  roleId Int
+
+  assets Asset[]
 }
 
 model Role {
   id    Int    @id @default(autoincrement())
   name  String @unique
   users User[]
+}
+
+model Asset {
+  id           String      @id @default(cuid())
+  productName  String
+  status       AssetStatus @default(BAIK)
+  purchaseDate DateTime
+  location     String
+  assetType    String
+  barcode      String      @unique
+
+  price        Decimal     @db.Decimal(12, 2)
+  usefulLife   Int
+  salvageValue Decimal     @db.Decimal(12, 2)
+
+  // --- PERUBAHAN DI SINI ---
+  // picId dan relasi pic sekarang opsional (boleh null)
+  pic   User? @relation(fields: [picId], references: [id])
+  picId Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AssetStatus {
+  BAIK
+  RUSAK
+  PERBAIKAN
 }

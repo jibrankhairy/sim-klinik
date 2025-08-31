@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, FormEvent } from "react";
+import { useAuth } from "@/components/AuthContext";
 
 const EyeIcon = ({ className }: { className?: string }) => (
   <svg
@@ -47,6 +48,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -66,8 +68,7 @@ export default function LoginPage() {
         throw new Error(data.message || "Terjadi kesalahan.");
       }
 
-      localStorage.setItem("authToken", data.token);
-      window.location.href = "/dashboard";
+      login(data.user, data.token);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -283,3 +284,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
