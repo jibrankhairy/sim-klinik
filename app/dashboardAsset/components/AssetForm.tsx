@@ -2,13 +2,26 @@
 
 "use client";
 import { useState, useEffect } from 'react';
-import type { Location, Asset } from '@prisma/client';
+// --- PERBAIKAN DI SINI: Hapus kata kunci 'type' agar 'AssetStatus' bisa digunakan sebagai nilai ---
+import { Location, Asset, AssetStatus } from '@prisma/client';
 import { QRCodeSVG } from 'qrcode.react';
 
-// Tipe data untuk form, menyesuaikan tipe data dari Prisma
+// Tipe untuk props yang diterima komponen
+interface AssetFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onFormSubmit: () => void;
+  assetToEdit?: (Omit<Asset, 'price' | 'salvageValue'> & { 
+      location: Location; 
+      price: number; 
+      salvageValue: number;
+  }) | null;
+}
+
+// Tipe data internal untuk state form
 type AssetFormData = {
     productName: string;
-    purchaseDate: string; // Tanggal akan dikelola sebagai string YYYY-MM-DD
+    purchaseDate: string;
     locationId: string;
     assetType: string;
     price: string;
@@ -16,15 +29,8 @@ type AssetFormData = {
     salvageValue: string;
     picName: string;
     picContact: string;
-    status: 'BAIK' | 'PERBAIKAN' | 'RUSAK';
+    status: AssetStatus; // Menggunakan tipe enum langsung
 };
-
-interface AssetFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onFormSubmit: () => void; // Fungsi untuk refresh data di halaman utama
-  assetToEdit?: (Asset & { location: Location }) | null; // Data aset yang akan diedit (opsional)
-}
 
 export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }: AssetFormProps) {
   const [formData, setFormData] = useState<AssetFormData>({
@@ -37,7 +43,6 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Efek untuk mengisi form dengan data saat mode edit dan fetch data dropdown
   useEffect(() => {
     async function fetchLocations() {
       try {
@@ -52,7 +57,6 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
     if (isOpen) {
         fetchLocations();
         if (assetToEdit) {
-            // Mode Edit: Isi form dengan data yang ada
             setFormData({
                 productName: assetToEdit.productName,
                 purchaseDate: new Date(assetToEdit.purchaseDate).toISOString().split('T')[0],
@@ -66,7 +70,6 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
                 status: assetToEdit.status,
             });
         } else {
-            // Mode Tambah Baru: Reset form
             setFormData({
                 productName: '', purchaseDate: '', locationId: '', assetType: '',
                 price: '', usefulLife: '', salvageValue: '',
@@ -77,8 +80,8 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
     }
   }, [assetToEdit, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value as any }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,13 +96,7 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          usefulLife: parseInt(formData.usefulLife, 10),
-          salvageValue: parseFloat(formData.salvageValue),
-          locationId: parseInt(formData.locationId, 10),
-        }),
+        body: JSON.stringify(formData),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -114,9 +111,8 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
     }
   };
   
-  // Logika untuk preview QR Code dinamis
   const selectedLocationName = locations.find(loc => loc.id.toString() === formData.locationId)?.name || '...';
-  const previewQrValue = `${formData.productName || '...'} - ${selectedLocationName}`;
+  const previewQrValue = `Nama Produk: ${formData.productName || '...'}, Lokasi: ${selectedLocationName}`;
 
   if (!isOpen) return null;
 
@@ -140,47 +136,47 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Lokasi (Cabang)</label>
-                        <select name="locationId" value={formData.locationId} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            <option value="">Pilih Cabang...</option>
-                            {locations.map(loc => (<option key={loc.id} value={loc.id}>{loc.name}</option>))}
-                        </select>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Lokasi (Cabang)</label>
+                      <select name="locationId" value={formData.locationId} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                          <option value="">Pilih Cabang...</option>
+                          {locations.map(loc => (<option key={loc.id} value={loc.id}>{loc.name}</option>))}
+                      </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Tipe Aset</label>
-                        <input type="text" name="assetType" placeholder="e.g., Elektronik" value={formData.assetType} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Tipe Aset</label>
+                      <input type="text" name="assetType" placeholder="e.g., Elektronik" value={formData.assetType} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nama PIC (Opsional)</label>
-                        <input type="text" name="picName" value={formData.picName} onChange={handleChange} placeholder="Nama Penanggung Jawab" className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Nama PIC (Opsional)</label>
+                      <input type="text" name="picName" value={formData.picName} onChange={handleChange} placeholder="Nama Penanggung Jawab" className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Kontak PIC (Opsional)</label>
-                        <input type="text" name="picContact" value={formData.picContact} onChange={handleChange} placeholder="No. HP atau Email" className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Kontak PIC (Opsional)</label>
+                      <input type="text" name="picContact" value={formData.picContact} onChange={handleChange} placeholder="No. HP atau Email" className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Beli</label>
-                        <input type="date" name="purchaseDate" value={formData.purchaseDate} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Beli</label>
+                      <input type="date" name="purchaseDate" value={formData.purchaseDate} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Status Awal</label>
-                        <select name="status" value={formData.status} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            <option value="BAIK">Baik</option>
-                            <option value="PERBAIKAN">Perbaikan</option>
-                            <option value="RUSAK">Rusak</option>
-                        </select>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                      <select name="status" value={formData.status} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                          {Object.values(AssetStatus).map(status => (
+                              <option key={status} value={status}>{status}</option>
+                          ))}
+                      </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Beli (Rp)</label>
-                        <input type="number" name="price" placeholder="25000000" value={formData.price} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Beli (Rp)</label>
+                      <input type="number" name="price" placeholder="25000000" value={formData.price} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Masa Manfaat (Tahun)</label>
-                        <input type="number" name="usefulLife" placeholder="5" value={formData.usefulLife} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Masa Manfaat (Tahun)</label>
+                      <input type="number" name="usefulLife" placeholder="5" value={formData.usefulLife} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
                     </div>
                     <div className="sm:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nilai Sisa (Rp)</label>
-                        <input type="number" name="salvageValue" placeholder="2500000" value={formData.salvageValue} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Nilai Sisa (Rp)</label>
+                      <input type="number" name="salvageValue" placeholder="2500000" value={formData.salvageValue} onChange={handleChange} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
                     </div>
                 </div>
               </div>
@@ -188,13 +184,13 @@ export default function AssetForm({ isOpen, onClose, onFormSubmit, assetToEdit }
                   <h4 className="font-bold mb-3 text-gray-700">Barcode Preview</h4>
                   <div className="p-2 bg-white border rounded-md">
                       <QRCodeSVG 
-                        value={assetToEdit ? `${assetToEdit.productName} - ${assetToEdit.location.name}` : previewQrValue} 
+                        value={previewQrValue} 
                         size={160} 
                         level={"L"} 
                       />
                   </div>
                   <p className="text-xs text-center mt-3 text-gray-500">
-                    {assetToEdit ? `Data: ${assetToEdit.productName}` : 'Konten QR akan sesuai input.'}
+                    Konten QR akan sesuai input.
                   </p>
               </div>
             </form>
