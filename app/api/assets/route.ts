@@ -6,25 +6,21 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
 
-// Fungsi untuk membuat barcode unik
 const generateBarcode = (productName: string): string => {
     const prefix = productName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
     const timestamp = Date.now();
     return `${prefix}-${timestamp}`;
 };
 
-// --- FUNGSI GET DENGAN PENAMBAHAN LOGIKA QR CODE ---
 export async function GET() {
   try {
     const assets = await prisma.asset.findMany({
-      // 1. Mengambil semua relasi yang dibutuhkan
       include: { 
         location: true 
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    // 2. Melakukan kalkulasi nilai penyusutan
     const assetsWithCalculations = assets.map(asset => {
       const price = asset.price.toNumber();
       const salvageValue = asset.salvageValue.toNumber();
@@ -43,19 +39,16 @@ export async function GET() {
 
       const currentValue = price - accumulatedDepreciation;
 
-      // Kembalikan objek dengan semua nilai finansial DAN QR code value
       return {
         ...asset,
-        price,
-        salvageValue,
+        price, // Mengirim 'price' sebagai number
+        salvageValue, // Mengirim 'salvageValue' sebagai number
         currentValue,
         accumulatedDepreciation,
-        // --- UPDATE DI SINI: Tambahkan properti baru untuk isi QR Code ---
         qrCodeValue: `${asset.productName} - ${asset.location.name}`
       };
     });
 
-    // 3. Membuat ringkasan data (TETAP ADA, TIDAK DIUBAH)
     const summary = assetsWithCalculations.reduce((acc, asset) => {
         acc.totalInitialValue += asset.price;
         acc.totalCurrentValue += asset.currentValue;
@@ -63,8 +56,6 @@ export async function GET() {
         return acc;
     }, { totalInitialValue: 0, totalCurrentValue: 0, totalDepreciation: 0 });
 
-
-    // 4. Mengembalikan respons lengkap
     return NextResponse.json({ summary, assets: assetsWithCalculations });
 
   } catch (error) {
@@ -73,8 +64,6 @@ export async function GET() {
   }
 }
 
-
-// --- FUNGSI POST (TIDAK ADA PERUBAHAN) ---
 export async function POST(req: Request) {
   try {
     const body = await req.json();

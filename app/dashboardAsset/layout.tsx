@@ -4,6 +4,7 @@ import { useAuth } from "@/components/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, createContext, useContext } from "react";
 import Link from "next/link";
+import Image from "next/image"; // 1. Tambahkan import ini
 
 // --- Kumpulan Ikon SVG ---
 const HomeIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -56,11 +57,21 @@ export default function DashboardAssetLayout({ children }: { children: React.Rea
     <SidebarContext.Provider value={{ isSidebarOpen, toggleSidebar }}>
       <div className="flex h-screen bg-gray-100 font-sans">
         <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform lg:relative lg:translate-x-0`}>
-            <div className="flex items-center justify-center h-20 border-b"><h1 className="text-2xl font-bold text-[#01449D]">YA Medika</h1></div>
+            {/* 2. Ganti bagian ini */}
+            <div className="flex items-center justify-center h-20 border-b px-4">
+              <Image 
+                src="/images/logo-klinik.png" 
+                alt="Logo Klinik"
+                width={120} 
+                height={40}
+                priority
+              />
+            </div>
+            {/* --- Batas Perubahan --- */}
             <nav className="flex-1 px-4 py-6 space-y-2">
                 <NavItem icon={<HomeIcon />} href="/dashboardAsset">Dashboard</NavItem>
                 <NavItem icon={<AssetIcon />} href="/dashboardAsset/list">Asset List</NavItem>
-                <NavItem icon={<MaintenanceIcon />} href="#">Maintenance</NavItem>
+                <NavItem icon={<MaintenanceIcon />} href="/dashboardAsset/maintenance">Maintenance</NavItem>
                 <NavItem icon={<MasterDataIcon />} href="/dashboardAsset/master-data">Master Data</NavItem>
                 <NavItem icon={<UserManagementIcon />} href="#">User Management</NavItem>
                 <NavItem icon={<HomeIcon />} href="/dashboardMain">Back to Main</NavItem>
