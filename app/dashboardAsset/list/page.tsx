@@ -7,7 +7,7 @@ import type { Asset, Location } from '@prisma/client';
 import AssetForm from '../components/AssetForm';
 import { QRCodeSVG } from 'qrcode.react';
 
-// Tipe data tetap sama
+// Tipe data ini penting untuk mendefinisikan struktur data yang diterima dari API
 type AssetWithDetails = Omit<Asset, 'price' | 'salvageValue'> & { 
   location: Location; 
   qrCodeValue: string;
@@ -19,7 +19,16 @@ type ApiResponse = {
     assets: AssetWithDetails[];
 };
 
-// Semua fungsi helper tetap sama
+// Fungsi untuk styling status
+const getStatusClass = (status: string) => {
+    switch (status.toUpperCase()) {
+        case 'BAIK': return 'bg-green-100 text-green-800';
+        case 'RUSAK': return 'bg-red-100 text-red-800';
+        case 'PERBAIKAN': return 'bg-yellow-100 text-yellow-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+};
+
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -53,15 +62,7 @@ const calculateDepreciation = (asset: AssetWithDetails) => {
     };
 };
 
-const getStatusClass = (status: string) => {
-    switch (status.toUpperCase()) {
-        case 'BAIK': return 'bg-green-100 text-green-800';
-        case 'RUSAK': return 'bg-red-100 text-red-800';
-        case 'PERBAIKAN': return 'bg-yellow-100 text-yellow-800';
-        default: return 'bg-gray-100 text-gray-800';
-    }
-};
-
+// Komponen utama dipisahkan untuk menggunakan useSearchParams
 function AssetListContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -77,7 +78,6 @@ function AssetListContent() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [assetToEdit, setAssetToEdit] = useState<AssetWithDetails | null>(null);
 
-    // Semua state dan fungsi logika (fetchData, useEffects, handlers) tetap sama
     const fetchData = async () => {
         try {
             const [assetsRes, locationsRes] = await Promise.all([
@@ -120,7 +120,7 @@ function AssetListContent() {
             setFilteredAssets(allAssets.filter(asset => asset.locationId === parseInt(selectedLocation)));
         }
     }, [selectedLocation, allAssets, router]);
-    
+
     const handlePrintBarcode = (asset: AssetWithDetails) => {
         const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(asset.qrCodeValue)}`;
         const printContent = `
@@ -147,6 +147,23 @@ function AssetListContent() {
                 fetchData();
             } catch (err: any) {
                 alert(`Error: ${err.message}`);
+            }
+        }
+    };
+
+    // --- 1. FUNGSI BARU UNTUK NON-AKTIFKAN ASET ---
+    const handleDeactivateClick = async (asset: AssetWithDetails) => {
+        if (window.confirm(`Yakin ingin mengubah status "${asset.productName}" menjadi RUSAK?`)) {
+            try {
+                const response = await fetch(`/api/assets/${asset.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'RUSAK' }),
+                });
+                if (!response.ok) throw new Error('Gagal update status aset');
+                fetchData(); // Refresh data di tabel
+            } catch (error) {
+                alert('Gagal update status aset');
             }
         }
     };
@@ -180,9 +197,7 @@ function AssetListContent() {
                     </div>
                 </div>
 
-                {/* --- PERUBAHAN UTAMA DI SINI --- */}
-
-                {/* 1. TAMPILAN TABEL UNTUK DESKTOP (MD KE ATAS) */}
+                {/* TAMPILAN TABEL UNTUK DESKTOP (MD KE ATAS) */}
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-sm text-left text-gray-500">
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50">
@@ -192,10 +207,10 @@ function AssetListContent() {
                                 <th scope="col" className="px-6 py-3">Harga Awal</th>
                                 <th scope="col" className="px-6 py-3">Nilai Buku</th>
                                 <th scope="col" className="px-6 py-3">Penyusutan/Bln</th>
-                                <th scope="col" className="px-g py-3">Lokasi</th>
+                                <th scope="col" className="px-6 py-3">Lokasi</th>
                                 <th scope="col" className="px-6 py-3">Status</th>
                                 <th scope="col" className="px-6 py-3">PIC</th>
-                                <th scope="col" className="px-6 py-3 min-w-[240px]">Aksi</th>
+                                <th scope="col" className="px-6 py-3 min-w-[280px]">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -212,7 +227,17 @@ function AssetListContent() {
                                             <td className="px-6 py-4">{asset.location.name}</td>
                                             <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusClass(asset.status)}`}>{asset.status}</span></td>
                                             <td className="px-6 py-4">{asset.picName || <span className="text-gray-400 italic">--</span>}</td>
-                                            <td className="px-6 py-4"><div className="flex items-center gap-x-4"><button onClick={() => handlePrintBarcode(asset)} className="text-gray-600 hover:text-gray-900 font-medium">🖨️ Print</button><button onClick={() => handleEditClick(asset)} className="text-blue-600 hover:text-blue-900 font-medium">✏️ Edit</button><button onClick={() => handleDeleteClick(asset.id)} className="text-red-600 hover:text-red-900 font-medium">🗑️ Hapus</button></div></td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-x-4">
+                                                    {/* --- 2. TOMBOL BARU DI TAMPILAN DESKTOP --- */}
+                                                    {asset.status !== 'RUSAK' && (
+                                                        <button onClick={() => handleDeactivateClick(asset)} className="text-orange-600 hover:text-orange-900 font-medium">🚫 Non-aktif</button>
+                                                    )}
+                                                    <button onClick={() => handlePrintBarcode(asset)} className="text-gray-600 hover:text-gray-900 font-medium">🖨️ Print</button>
+                                                    <button onClick={() => handleEditClick(asset)} className="text-blue-600 hover:text-blue-900 font-medium">✏️ Edit</button>
+                                                    <button onClick={() => handleDeleteClick(asset.id)} className="text-red-600 hover:text-red-900 font-medium">🗑️ Hapus</button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     );
                                 })
@@ -223,7 +248,7 @@ function AssetListContent() {
                     </table>
                 </div>
 
-                {/* 2. TAMPILAN KARTU UNTUK MOBILE (DI BAWAH MD) */}
+                {/* TAMPILAN KARTU UNTUK MOBILE (DI BAWAH MD) */}
                 <div className="block md:hidden">
                     {filteredAssets.length > 0 ? (
                         <div className="space-y-4">
@@ -232,10 +257,7 @@ function AssetListContent() {
                                 return (
                                     <div key={asset.id} className="bg-gray-50 p-4 rounded-lg shadow">
                                         <div className="flex justify-between items-start border-b pb-3 mb-3">
-                                            <div className="flex-grow">
-                                                <h4 className="font-bold text-gray-900">{asset.productName}</h4>
-                                                <p className="text-sm text-gray-500">{asset.location.name}</p>
-                                            </div>
+                                            <div className="flex-grow"><h4 className="font-bold text-gray-900">{asset.productName}</h4><p className="text-sm text-gray-500">{asset.location.name}</p></div>
                                             <div className="p-1 border inline-block bg-white ml-2"><QRCodeSVG value={asset.qrCodeValue} size={50} /></div>
                                         </div>
                                         <div className="space-y-2 text-sm">
@@ -246,6 +268,10 @@ function AssetListContent() {
                                             <div className="flex justify-between"><span className="font-semibold text-gray-600">Penyusutan/Bln</span> <span className="text-gray-800">{formatCurrency(monthlyDepreciation)}</span></div>
                                         </div>
                                         <div className="flex justify-end gap-x-4 mt-4 pt-3 border-t">
+                                            {/* --- 3. TOMBOL BARU DI TAMPILAN MOBILE --- */}
+                                            {asset.status !== 'RUSAK' && (
+                                                <button onClick={() => handleDeactivateClick(asset)} className="text-orange-600 hover:text-orange-900 font-medium">🚫 Non-aktif</button>
+                                            )}
                                             <button onClick={() => handlePrintBarcode(asset)} className="text-gray-600 hover:text-gray-900 font-medium">🖨️ Print</button>
                                             <button onClick={() => handleEditClick(asset)} className="text-blue-600 hover:text-blue-900 font-medium">✏️ Edit</button>
                                             <button onClick={() => handleDeleteClick(asset.id)} className="text-red-600 hover:text-red-900 font-medium">🗑️ Hapus</button>
@@ -258,7 +284,6 @@ function AssetListContent() {
                         <div className="text-center py-10 text-gray-500">Tidak ada aset yang ditemukan.</div>
                     )}
                 </div>
-
             </div>
         </>
     );

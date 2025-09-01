@@ -2,7 +2,9 @@
 
 "use client";
 import React from 'react';
-import type { Asset, Maintenance, MaintenanceStatus } from '@prisma/client';
+// --- PERBAIKAN DI SINI ---
+// 'import type' diubah menjadi 'import' agar enum MaintenanceStatus bisa digunakan
+import { Asset, Maintenance, MaintenanceStatus } from '@prisma/client';
 
 type MaintenanceDialogProps = {
   isOpen: boolean;
@@ -10,6 +12,16 @@ type MaintenanceDialogProps = {
   onFormSubmit: () => void;
   maintenanceToEdit: Maintenance | null;
   assets: Asset[];
+};
+
+const formatDateForInput = (date: Date | string | null | undefined): string => {
+    if (!date) return '';
+    try {
+        const d = new Date(date);
+        return d.toISOString().split('T')[0];
+    } catch (e) {
+        return '';
+    }
 };
 
 export default function MaintenanceDialog({ isOpen, onClose, onFormSubmit, maintenanceToEdit, assets }: MaintenanceDialogProps) {
@@ -20,7 +32,6 @@ export default function MaintenanceDialog({ isOpen, onClose, onFormSubmit, maint
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    // --- PERUBAHAN DI SINI ---
     const url = maintenanceToEdit ? `/api/assets/maintenance/${maintenanceToEdit.id}` : '/api/assets/maintenance';
     const method = maintenanceToEdit ? 'PUT' : 'POST';
 
@@ -82,7 +93,7 @@ export default function MaintenanceDialog({ isOpen, onClose, onFormSubmit, maint
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               >
                 {(Object.keys(MaintenanceStatus) as Array<keyof typeof MaintenanceStatus>).map(status => (
-                  <option key={status} value={status}>{status}</option>
+                  <option key={status} value={status}>{status.replace('_', ' ')}</option>
                 ))}
               </select>
             </div>
@@ -91,12 +102,12 @@ export default function MaintenanceDialog({ isOpen, onClose, onFormSubmit, maint
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="scheduledDate" className="block text-sm font-medium text-gray-700">Tgl. Dijadwalkan</label>
-              <input type="date" id="scheduledDate" name="scheduledDate" defaultValue={maintenanceToEdit?.scheduledDate ? new Date(maintenanceToEdit.scheduledDate).toISOString().split('T')[0] : ''} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+              <input type="date" id="scheduledDate" name="scheduledDate" defaultValue={formatDateForInput(maintenanceToEdit?.scheduledDate)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
             </div>
             {maintenanceToEdit && (
                 <div>
-                  <label htmlFor="completionDate" className="block text-sm font-medium text-gray-700">Tgl. Selesai</label>
-                  <input type="date" id="completionDate" name="completionDate" defaultValue={maintenanceToEdit?.completionDate ? new Date(maintenanceToEdit.completionDate).toISOString().split('T')[0] : ''} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                  <label htmlFor="completionDate" className="block text-sm font-medium text-gray-700">Tgl. Sselesai</label>
+                  <input type="date" id="completionDate" name="completionDate" defaultValue={formatDateForInput(maintenanceToEdit?.completionDate)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                 </div>
             )}
              <div>

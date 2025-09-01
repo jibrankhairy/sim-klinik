@@ -1,7 +1,7 @@
 // app/api/assets/route.ts
 
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, AssetStatus } from "@prisma/client";
 import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
@@ -16,19 +16,50 @@ export async function GET() {
   try {
     const assets = await prisma.asset.findMany({
       include: { 
-        location: true 
+        location: true,
+        maintenances: {
+          where: {
+            status: {
+              in: ['SCHEDULED', 'IN_PROGRESS']
+            }
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
 
+    // --- PERUBAHAN LOGIKA DI SINI ---
+    // Dapatkan tanggal hari ini (tanpa jam, menit, detik) untuk perbandingan yang adil
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const assetsWithCalculations = assets.map(asset => {
+      // Logika Pengecekan Status yang Lebih Cerdas
+      // Cek apakah ada setidaknya SATU maintenance yang sudah aktif
+      const hasActiveMaintenance = asset.maintenances.some(maint => {
+        // Langsung true jika ada yang sedang IN_PROGRESS
+        if (maint.status === 'IN_PROGRESS') {
+          return true;
+        }
+        // Jika SCHEDULED, cek tanggalnya
+        if (maint.status === 'SCHEDULED' && maint.scheduledDate) {
+          const scheduledDate = new Date(maint.scheduledDate);
+          scheduledDate.setHours(0, 0, 0, 0);
+          // Return true HANYA JIKA tanggal jadwalnya hari ini atau sudah lewat
+          return scheduledDate <= today;
+        }
+        return false;
+      });
+      
+      const finalStatus = hasActiveMaintenance ? AssetStatus.PERBAIKAN : asset.status;
+      // --- AKHIR PERUBAHAN LOGIKA ---
+
       const price = asset.price.toNumber();
       const salvageValue = asset.salvageValue.toNumber();
+      // ... sisa kalkulasi tetap sama ...
       const usefulLife = asset.usefulLife;
-      
       const annualDepreciation = usefulLife > 0 ? (price - salvageValue) / usefulLife : 0;
       const ageInYears = (new Date().getTime() - new Date(asset.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-
       let accumulatedDepreciation = annualDepreciation * ageInYears;
       if (accumulatedDepreciation > (price - salvageValue)) {
           accumulatedDepreciation = price - salvageValue;
@@ -36,13 +67,14 @@ export async function GET() {
       if (accumulatedDepreciation < 0) {
           accumulatedDepreciation = 0;
       }
-
       const currentValue = price - accumulatedDepreciation;
+      const { maintenances, ...restOfAsset } = asset;
 
       return {
-        ...asset,
-        price, // Mengirim 'price' sebagai number
-        salvageValue, // Mengirim 'salvageValue' sebagai number
+        ...restOfAsset,
+        status: finalStatus,
+        price,
+        salvageValue,
         currentValue,
         accumulatedDepreciation,
         qrCodeValue: `${asset.productName} - ${asset.location.name}`
@@ -65,6 +97,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+    // ... Fungsi POST tidak ada perubahan ...
   try {
     const body = await req.json();
     const { 

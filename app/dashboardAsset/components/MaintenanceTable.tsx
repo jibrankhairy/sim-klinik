@@ -4,17 +4,16 @@
 import React from 'react';
 import type { Maintenance, Asset } from '@prisma/client';
 
-// Tipe gabungan untuk data maintenance beserta detail asetnya
 type MaintenanceWithAsset = Maintenance & { asset: Asset };
 
-// Tipe untuk props yang diterima komponen ini
 type MaintenanceTableProps = {
   maintenances: MaintenanceWithAsset[];
   onEdit: (maintenance: Maintenance) => void;
   onDelete: (id: string) => void;
+  onMarkAsDone: (maintenance: MaintenanceWithAsset) => void;
+  onReopen: (maintenance: MaintenanceWithAsset) => void;
 };
 
-// Fungsi helper untuk styling status
 const getStatusClass = (status: string) => {
     switch (status) {
         case 'SCHEDULED': return 'bg-blue-100 text-blue-800';
@@ -25,21 +24,21 @@ const getStatusClass = (status: string) => {
     }
 };
 
-// Fungsi helper untuk memformat tanggal
 const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return '--';
+    // --- PERBAIKAN DI SINI ---
+    // Nama fungsi yang salah 'toLocaleDateDateString' diubah menjadi 'toLocaleDateString'
     return new Date(dateString).toLocaleDateString('id-ID', {
         day: '2-digit', month: 'short', year: 'numeric'
     });
 };
 
-// Fungsi helper untuk memformat mata uang
 const formatCurrency = (cost: number | null | undefined) => {
     if (cost === null || cost === undefined) return '--';
     return `Rp ${cost.toLocaleString('id-ID')}`;
 }
 
-export default function MaintenanceTable({ maintenances, onEdit, onDelete }: MaintenanceTableProps) {
+export default function MaintenanceTable({ maintenances, onEdit, onDelete, onMarkAsDone, onReopen }: MaintenanceTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm text-left text-gray-500">
@@ -51,7 +50,7 @@ export default function MaintenanceTable({ maintenances, onEdit, onDelete }: Mai
             <th scope="col" className="px-6 py-3">Jadwal</th>
             <th scope="col" className="px-6 py-3">Selesai</th>
             <th scope="col" className="px-6 py-3">Biaya</th>
-            <th scope="col" className="px-6 py-3">Aksi</th>
+            <th scope="col" className="px-6 py-3 min-w-[240px]">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -70,6 +69,26 @@ export default function MaintenanceTable({ maintenances, onEdit, onDelete }: Mai
                 <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(m.cost)}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-x-4">
+                    {(m.status !== 'COMPLETED' && m.status !== 'CANCELLED') && (
+                      <button 
+                        onClick={() => onMarkAsDone(m)} 
+                        className="text-green-600 hover:text-green-800 font-medium"
+                        title="Tandai sebagai Selesai"
+                      >
+                        ✅ Selesai
+                      </button>
+                    )}
+                    
+                    {m.status === 'COMPLETED' && (
+                        <button
+                            onClick={() => onReopen(m)}
+                            className="text-yellow-600 hover:text-yellow-800 font-medium"
+                            title="Buka Kembali Task"
+                        >
+                            ↩️ Buka Lagi
+                        </button>
+                    )}
+                    
                     <button onClick={() => onEdit(m)} className="text-blue-600 hover:text-blue-800 font-medium">✏️ Edit</button>
                     <button onClick={() => onDelete(m.id)} className="text-red-600 hover:text-red-800 font-medium">🗑️ Hapus</button>
                   </div>
@@ -77,11 +96,7 @@ export default function MaintenanceTable({ maintenances, onEdit, onDelete }: Mai
               </tr>
             ))
           ) : (
-            <tr>
-                <td colSpan={7} className="text-center py-10 text-gray-500">
-                    Belum ada data maintenance.
-                </td>
-            </tr>
+            <tr><td colSpan={7} className="text-center py-10 text-gray-500">Belum ada data maintenance.</td></tr>
           )}
         </tbody>
       </table>

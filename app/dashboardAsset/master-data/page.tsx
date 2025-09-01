@@ -72,15 +72,6 @@ export default function MasterDataPage() {
         />
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="text-2xl font-bold text-gray-800 mb-4">
-          Master Teknisi / PIC
-        </h3>
-        <p className="text-sm text-gray-500">
-          Manajemen data PIC kini dilakukan saat menambah atau mengedit data
-          aset.
-        </p>
-      </div>
     </div>
   );
 }
